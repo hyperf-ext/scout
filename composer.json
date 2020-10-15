@@ -1,0 +1,62 @@
+{
+    "name": "hyperf-ext/scout",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "php",
+        "hyperf",
+        "search",
+        "elasticsearch",
+        "model"
+    ],
+    "description": "The Hyperf Scout package.",
+    "authors": [
+        {
+            "name": "Eric Zhu",
+            "email": "eric@zhu.email"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "HyperfExt\\Scout\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "HyperfTest\\Scout\\": "tests"
+        }
+    },
+    "require": {
+        "php": ">=7.2",
+        "ext-swoole": ">=4.5",
+        "hyperf-ext/elasticsearch": "^2.0",
+        "hyperf/command": "^2.0",
+        "hyperf/config": "^2.0",
+        "hyperf/db-connection": "^2.0",
+        "hyperf/di": "^2.0",
+        "hyperf/event": "^2.0",
+        "hyperf/framework": "^2.0",
+        "hyperf/model-listener": "^2.0",
+        "ongr/elasticsearch-dsl": "^7.2"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.14",
+        "hyperf/testing": "^2.0",
+        "phpstan/phpstan": "^0.12",
+        "swoole/ide-helper": "dev-master",
+        "mockery/mockery": "^1.0"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "co-phpunit -c phpunit.xml --colors=always",
+        "analyse": "phpstan analyse --memory-limit 1024M -l 0 ./src",
+        "cs-fix": "php-cs-fixer fix $1"
+    },
+    "extra": {
+        "hyperf": {
+            "config": "HyperfExt\\Scout\\ConfigProvider"
+        }
+    }
+}
