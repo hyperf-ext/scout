@@ -8,7 +8,7 @@
 
 另外，组件在搜索查询构造器中通过 [`ongr/elasticsearch-dsl`](https://github.com/ongr-io/ElasticsearchDSL) 包来使用 Elasticsearch DSL 构建复杂的查询条件。
 
-> 注意，组件依赖的 `elasticsearch/elasticsearch` 包版本为 `^7.9`，映射类型已被废弃并将在 `8.0` 中彻底移除，因此组件同样也不提供映射类型的支持，即一个模型对于一个索引。
+> 注意，组件依赖的 `elasticsearch/elasticsearch` 包版本为 `^7.9`，映射类型已被废弃并将在 `8.0` 中彻底移除，因此组件同样也不提供映射类型的支持，即一个模型对应一个索引。
 > 
 > 使用独立的索引取代使用映射类型可以让数据更倾向于密集而非稀疏，并且由于同一个索引中的所有的文档表示为同一种实体，在通过全文搜索时打分的条件统计会更为精确。
  
@@ -456,7 +456,7 @@ $films = App\Models\Film::search()
 
 以下列出的以 `where` 开头的方法同时提供以 `mustWhere`、`shouldWhere`、`notWhere` 开头的版本。
 
-`where` 开头的方法都使用 `filter` Occurrence 进行查询，`mustWhere` 方法使用 `must`，`shouldWhere` 方法使用 `should`，`notWhere` 方法使用 `must_not`。
+`where` 开头的方法使用 `filter` Occurrence 进行查询，`mustWhere` 方法使用 `must`，`shouldWhere` 方法使用 `should`，`notWhere` 方法使用 `must_not`。
 
 ```php
 whereIn(string $field, array $values, array $parameters = [])
