@@ -35,7 +35,7 @@ class ConfigProvider
             'publish' => [
                 [
                     'id' => 'config',
-                    'description' => 'The config for HyperfExt\\Scout.',
+                    'description' => 'The config for hyperf-ext/scout.',
                     'source' => __DIR__ . '/../publish/scout.php',
                     'destination' => BASE_PATH . '/config/autoload/scout.php',
                 ],
