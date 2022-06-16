@@ -270,9 +270,9 @@ class Engine
             $query['from'] = $options['from'];
         }
 
-        $scoutSettings = $builder->model->searchSettings ?? [];
+        $scoutSettings = $builder->model->getScoutSettings() ?? [];
 
-        // 高亮
+        // highlight
         if ($scoutSettings && isset($scoutSettings['attributesToHighlight'])) {
             $attributes = $scoutSettings['attributesToHighlight'];
             foreach ($attributes as $attribute) {
