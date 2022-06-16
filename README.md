@@ -4,14 +4,14 @@
 
 [`hyperf-ext/scout`](https://github.com/hyperf-ext/scout) 组件为 Hyperf 模型的全文搜索提供了基于 Elasticsearch 的简单的解决方案。通过使用模型观察者，组件会自动同步模型记录的搜索索引。
 
-该组件移植自 [`Laravel Scout`](https://github.com/laravel/scout )，与 Laravel Scout 不同的是，为了提升使用体验并更好的与 Elasticsearch 结合，该组件移除了自定义驱动的特性，仅支持 Elasticsearch，同时针对 Elasticsearch 的特性在原来的基础上进行了诸多的优化，通过队列更新索引的方式也改为通过协程实现。
+该组件移植自 [`Laravel Scout`](https://github.com/laravel/scout )，与 Laravel Scout 不同的是，为了提升使用体验并更好的与 Elasticsearch 结合，该组件移除了自定义驱动的特性，仅支持 Elasticsearch，同时针对
+Elasticsearch 的特性在原来的基础上进行了诸多的优化，通过队列更新索引的方式也改为通过协程实现。
 
 另外，组件在搜索查询构造器中通过 [`ongr/elasticsearch-dsl`](https://github.com/ongr-io/ElasticsearchDSL) 包来使用 Elasticsearch DSL 构建复杂的查询条件。
 
 > 注意，组件依赖的 `elasticsearch/elasticsearch` 包版本为 `^7.9`，映射类型已被废弃并将在 `8.0` 中彻底移除，因此组件同样也不提供映射类型的支持，即一个模型对应一个索引。
-> 
+>
 > 使用独立的索引取代使用映射类型可以让数据更倾向于密集而非稀疏，并且由于同一个索引中的所有的文档表示为同一种实体，在通过全文搜索时打分的条件统计会更为精确。
- 
 
 ## 安装
 
@@ -61,6 +61,35 @@ class Post extends Model
 ```
 
 ## 配置模型
+
+### 配置 Elasticsearch 搜索设置
+
+搜索设置可以通过在模型中添加 `searchSetting` 属性来配置，目前只支持高亮：
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Hyperf\Database\Model\Model;
+use HyperfExt\Scout\Searchable;
+
+class Post extends Model
+{
+    use Searchable;
+
+      // 搜索 `searchSetting` 配置
+      public $searchSetting = [
+        //高亮
+        'attributesToHighlight' => [
+            'title' => ["pre_tags" => "<b style='color:red'>", "post_tags" => "</b>"],
+            'content'
+        ],
+    ];
+}
+```
 
 ### 配置 Elasticsearch 索引设置
 
@@ -529,13 +558,15 @@ $orders = App\Models\Order::search('Star Trek')->paginate(15);
 
 ### 软删除
 
-如果您索引的模型配置了[软删除](https://hyperf.wiki/2.0/#/zh-cn/db/model?id=%e8%bd%af%e5%88%a0%e9%99%a4 )，并且您需要搜索已删除的模型，请设置 `config/autoload/scout.php` 中的 `soft_delete` 选项为 `true`（默认值）：
+如果您索引的模型配置了[软删除](https://hyperf.wiki/2.0/#/zh-cn/db/model?id=%e8%bd%af%e5%88%a0%e9%99%a4 )，并且您需要搜索已删除的模型，请设置 `config/autoload/scout.php`
+中的 `soft_delete` 选项为 `true`（默认值）：
 
 ```php
 'soft_delete' => true,
 ```
 
-当此配置选项为 `true` 时，Scout 将不会从搜索索引中删除软删除的模型。并且在查询时，其逻辑与传统的模型是一致的，因此请确保索引的数据中包含软删除的标识字段，通常是 `deleted_at`。然后，您可以在搜索时使用 `withTrashed` 或 `onlyTrashed` 方法来检索软删除的记录：
+当此配置选项为 `true` 时，Scout 将不会从搜索索引中删除软删除的模型。并且在查询时，其逻辑与传统的模型是一致的，因此请确保索引的数据中包含软删除的标识字段，通常是 `deleted_at`。然后，您可以在搜索时使用 `withTrashed` 或 `onlyTrashed`
+方法来检索软删除的记录：
 
 ```php
 // 检索结果时包含已删除记录...

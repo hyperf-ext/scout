@@ -169,7 +169,6 @@ class Engine
             return $idPositions[$model->getScoutKey()];
         })->keyBy($model->getKeyName());
 
-
         return collect($results['hits']['hits'])->map(function ($hit) use ($res) {
             $one = $res[$hit['_id']];
 
@@ -270,13 +269,17 @@ class Engine
             $query['from'] = $options['from'];
         }
 
-        $scoutSettings = $builder->model->getScoutSettings() ?? [];
+        $searchSetting = $builder->model->searchSetting ?? [];
 
-        // highlight
-        if ($scoutSettings && isset($scoutSettings['attributesToHighlight'])) {
-            $attributes = $scoutSettings['attributesToHighlight'];
-            foreach ($attributes as $attribute) {
-                $query['body']['highlight']['fields'][$attribute] = new \stdClass();
+        // 高亮
+        if ($searchSetting && isset($searchSetting['attributesToHighlight'])) {
+            $attributes = $searchSetting['attributesToHighlight'];
+            foreach ($attributes as $key => $attribute) {
+                if (is_array($attribute)) {
+                    $query['body']['highlight']['fields'][$key] = $attribute;
+                } else {
+                    $query['body']['highlight']['fields'][$attribute] = new \stdClass();
+                }
             }
         }
 
