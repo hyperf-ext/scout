@@ -8,6 +8,7 @@ declare(strict_types=1);
  * @contact  eric@zhu.email
  * @license  https://github.com/hyperf-ext/scout/blob/master/LICENSE
  */
+
 namespace HyperfExt\Scout;
 
 use Elasticsearch\Client;
@@ -52,18 +53,18 @@ class Engine
             $body[] = [
                 'update' => [
                     '_index' => $model->searchableAs(),
-                    '_id' => $model->getScoutKey(),
+                    '_id'    => $model->getScoutKey(),
                 ],
             ];
             $body[] = [
-                'doc' => $doc,
+                'doc'           => $doc,
                 'doc_as_upsert' => true,
             ];
         }
 
         $this->elasticsearch->bulk([
             'refresh' => config('scout.doc_refresh', true),
-            'body' => $body,
+            'body'    => $body,
         ]);
     }
 
@@ -82,14 +83,14 @@ class Engine
             $body[] = [
                 'delete' => [
                     '_index' => $model->searchableAs(),
-                    '_id' => $model->getScoutKey(),
+                    '_id'    => $model->getScoutKey(),
                 ],
             ];
         }
 
         $this->elasticsearch->bulk([
             'refresh' => config('scout.document_refresh', true),
-            'body' => $body,
+            'body'    => $body,
         ]);
     }
 
@@ -104,7 +105,7 @@ class Engine
         $size = $builder->getSearch()->getSize();
         return $this->performSearch(
             $builder,
-            ! is_null($from)
+            !is_null($from)
                 ? ['size' => $size, 'from' => $from]
                 : []
         );
@@ -130,7 +131,7 @@ class Engine
     {
         $result = $this->performCount($query);
 
-        return isset($result['count']) ? (int) $result['count'] : 0;
+        return isset($result['count']) ? (int)$result['count'] : 0;
     }
 
     /**
@@ -143,12 +144,13 @@ class Engine
         return collect($results['hits']['hits'])->pluck('_id');
     }
 
+
     /**
      * Map the given results to instances of the given model.
      *
      * @param mixed $results
      */
-    public function map(Builder $builder, $results, Model $model): ModelCollection
+    public function map(Builder $builder, $results, Model $model)
     {
         if ($this->getTotalCount($results) === 0) {
             return $model->newCollection();
@@ -158,14 +160,25 @@ class Engine
 
         $idPositions = array_flip($ids);
 
-        return $model->getScoutModelsByIds(
+        $res = $model->getScoutModelsByIds(
             $builder,
             $ids
         )->filter(function ($model) use ($ids) {
             return in_array($model->getScoutKey(), $ids);
         })->sortBy(function ($model) use ($idPositions) {
             return $idPositions[$model->getScoutKey()];
-        })->values();
+        })->keyBy($model->getKeyName());
+
+        return collect($results['hits']['hits'])->map(function ($hit) use ($res) {
+            $one = $res[$hit['_id']];
+
+            if (isset($hit['highlight'])) {
+                foreach ($hit['highlight'] as $key => $value) {
+                    $one->{$key} = $value[0];
+                }
+            }
+            return $one;
+        });
     }
 
     /**
@@ -175,7 +188,7 @@ class Engine
      */
     public function getTotalCount($results): int
     {
-        return (int) $results['hits']['total']['value'];
+        return (int)$results['hits']['total']['value'];
     }
 
     /**
@@ -185,8 +198,8 @@ class Engine
     {
         $this->elasticsearch->deleteByQuery([
             'refresh' => config('scout.document_refresh', true),
-            'index' => $model->searchableAs(),
-            'body' => [
+            'index'   => $model->searchableAs(),
+            'body'    => [
                 'query' => ['match_all' => []],
             ],
         ]);
@@ -227,8 +240,8 @@ class Engine
     protected function performCount(Builder $builder, array $options = [])
     {
         $query = [
-            'index' => $builder->index ?? $builder->model->searchableAs(),
-            'body' => $builder->toArray(),
+            'index'            => $builder->index ?? $builder->model->searchableAs(),
+            'body'             => $builder->toArray(),
             'ignore_throttled' => false,
         ];
 
@@ -243,8 +256,8 @@ class Engine
     protected function performSearch(Builder $builder, array $options = [])
     {
         $query = [
-            'index' => $builder->index ?: $builder->model->searchableAs(),
-            'body' => $builder->toArray(),
+            'index'            => $builder->index ?: $builder->model->searchableAs(),
+            'body'             => $builder->toArray(),
             'ignore_throttled' => false,
         ];
 
@@ -254,6 +267,20 @@ class Engine
 
         if (isset($options['from'])) {
             $query['from'] = $options['from'];
+        }
+
+        $searchSetting = $builder->model->searchSetting ?? [];
+
+        // 高亮
+        if ($searchSetting && isset($searchSetting['attributesToHighlight'])) {
+            $attributes = $searchSetting['attributesToHighlight'];
+            foreach ($attributes as $key => $attribute) {
+                if (is_array($attribute)) {
+                    $query['body']['highlight']['fields'][$key] = $attribute;
+                } else {
+                    $query['body']['highlight']['fields'][$attribute] = new \stdClass();
+                }
+            }
         }
 
         if ($builder->callback) {
